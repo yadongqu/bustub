@@ -53,11 +53,10 @@ class LRUKNode {
   }
 
   auto Record(size_t timestamp) -> void {
-    if(history_.size() < k_) {
-      history_.push_back(timestamp);
-    }
-    history_.pop_front();
     history_.push_back(timestamp);
+    if (history_.size() > k_) {
+    history_.pop_front();
+    }
   }
 
   void setFrameId(frame_id_t id) {

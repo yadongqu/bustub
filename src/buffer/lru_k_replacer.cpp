@@ -21,7 +21,6 @@ LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(num_fra
 
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   std::lock_guard<std::mutex> lock(latch_);
-  current_timestamp_++;
   if (node_store_.empty()) {
     return false;
   }
@@ -31,6 +30,10 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
       evictable.push_back(pair.first);
     }
   }
+  if (evictable.empty()) {
+    return false;
+  }
+
   std::vector<frame_id_t> less_than_k;
   for(auto id: evictable) {
     if(node_store_.at(id).LessThank()) {
@@ -57,21 +60,19 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
     *frame_id = id;
     return true;
   }
-  return false;
 }
 
 void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType access_type) {
   std::lock_guard<std::mutex> lock(latch_);
-
+  current_timestamp_+=1;
   BUSTUB_ASSERT(static_cast<size_t>(frame_id) < replacer_size_, "frame id is bigger than replacer size");
-
   if (node_store_.find(frame_id) == node_store_.end() && node_store_.size() < replacer_size_) {
     auto node = LRUKNode();
     node.SetK(k_);
     node.setFrameId(frame_id);
     node_store_.insert(std::pair<frame_id_t, LRUKNode>(frame_id, node));
   }
-  node_store_[frame_id].Record(current_timestamp_++);
+  node_store_[frame_id].Record(current_timestamp_);
 }
 
 void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
