@@ -37,14 +37,21 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   }
 
   if(!less_than_k.empty()) {
-    *frame_id = *std::min_element(less_than_k.begin(), less_than_k.end(), [&](const auto a, const auto b) {
+    auto id = *std::min_element(less_than_k.begin(), less_than_k.end(), [&](const auto a, const auto b) {
       return node_store_[a].Earliest() < node_store_[b].Earliest();
               });
+    node_store_.erase(id);
+    curr_size_--;
+    *frame_id = id;
     return true;
   } else {
-    *frame_id = *std::min_element(evictable.begin(), evictable.end(), [&](const auto a, const auto b) {
+    auto id = *std::min_element(evictable.begin(), evictable.end(), [&](const auto a, const auto b) {
       return node_store_[a].KDistance() > node_store_[b].KDistance();
     });
+
+    node_store_.erase(id);
+    curr_size_--;
+    *frame_id = id;
     return true;
   }
   return false;
@@ -56,7 +63,8 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
   BUSTUB_ASSERT(static_cast<size_t>(frame_id) < replacer_size_, "frame id is bigger than replacer size");
 
   if (node_store_.find(frame_id) == node_store_.end() && node_store_.size() < replacer_size_) {
-    auto node = LRUKNode(k_);
+    auto node = LRUKNode();
+    node.SetK(k_);
     node.setFrameId(frame_id);
     node_store_.insert(std::pair<frame_id_t, LRUKNode>(frame_id, node));
   }

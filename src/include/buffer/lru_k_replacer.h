@@ -29,8 +29,8 @@ class LRUKNode {
 
  public:
 
-  LRUKNode(size_t k) : k_(k) {
-
+  void SetK(size_t k) {
+    k_ = k;
   }
 
   auto IsEvictable() -> bool {
