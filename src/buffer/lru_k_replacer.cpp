@@ -13,9 +13,11 @@
 #include "buffer/lru_k_replacer.h"
 #include "common/exception.h"
 #include <algorithm>
+#include <chrono>
 namespace bustub {
 
-LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(num_frames), k_(k) {}
+LRUKReplacer::LRUKReplacer(size_t num_frames, size_t k) : replacer_size_(num_frames), k_(k) {
+}
 
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   std::lock_guard<std::mutex> lock(latch_);
@@ -37,6 +39,7 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   }
 
   if(!less_than_k.empty()) {
+    
     auto id = *std::min_element(less_than_k.begin(), less_than_k.end(), [&](const auto a, const auto b) {
       return node_store_[a].Earliest() < node_store_[b].Earliest();
               });
@@ -69,7 +72,6 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id, [[maybe_unused]] AccessType
     node_store_.insert(std::pair<frame_id_t, LRUKNode>(frame_id, node));
   }
   node_store_[frame_id].Record(current_timestamp_++);
-
 }
 
 void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
